@@ -54,16 +54,13 @@ class TaskService {
     return true;
   }
 
-  async getTask(taskId: number, userId: number) {
-    const task = await Task.findOne({
-      where: { id: taskId, userId },
+  async getTask(userId: number, taskId: string) {
+    return await Task.findOne({
+      where: {
+        id: taskId,
+        userId
+      }
     });
-
-    if (!task) {
-      throw new Error('Task not found or unauthorized');
-    }
-
-    return task;
   }
 
   async searchTasks(userId: number, params: TaskSearchParams) {

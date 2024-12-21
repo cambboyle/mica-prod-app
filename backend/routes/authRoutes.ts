@@ -49,9 +49,9 @@ router.get('/google/callback',
       }
 
       const token = jwt.sign(
-        { id: user.id },
-        process.env.JWT_SECRET!,
-        { expiresIn: '24h' }
+        { id: user.id, email: user.email },
+        process.env.JWT_SECRET || 'your-jwt-secret'
+        // Removed expiresIn - token will never expire
       );
 
       // Include minimal user data in the redirect
@@ -74,9 +74,9 @@ router.post('/login',
   passport.authenticate('local', { session: false }),
   (req, res) => {
     const token = jwt.sign(
-      { id: req.user!.id },
-      process.env.JWT_SECRET!,
-      { expiresIn: '24h' }
+      { id: req.user!.id, email: req.user!.email },
+      process.env.JWT_SECRET || 'your-jwt-secret'
+      // Removed expiresIn - token will never expire
     );
 
     res.json({
@@ -112,9 +112,9 @@ router.post('/register',
       });
 
       const token = jwt.sign(
-        { id: user.id },
-        process.env.JWT_SECRET!,
-        { expiresIn: '24h' }
+        { id: user.id, email: user.email },
+        process.env.JWT_SECRET || 'your-jwt-secret'
+        // Removed expiresIn - token will never expire
       );
 
       res.status(201).json({

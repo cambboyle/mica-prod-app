@@ -40,6 +40,16 @@ class TaskService {
     }
   }
 
+  async getTask(taskId: string) {
+    try {
+      const response = await api.get(`${API_ENDPOINT}/${taskId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching task:', error);
+      throw error;
+    }
+  }
+
   async createTask(data: TaskCreateData) {
     try {
       const response = await api.post(API_ENDPOINT, data);

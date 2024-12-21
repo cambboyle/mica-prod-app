@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Tasks.css';
 import TaskModal from '../components/TaskModal';
 import taskService, { Task, TaskSearchParams } from '../services/taskService';
@@ -58,6 +59,8 @@ const Tasks: React.FC = () => {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const navigate = useNavigate();
 
   // Fetch tasks
   const fetchTasks = useCallback(async (params: TaskSearchParams = {}) => {
@@ -206,6 +209,10 @@ const Tasks: React.FC = () => {
     setSelectedTaskId(taskId);
   }, []);
 
+  const handleTaskClick = (task: Task) => {
+    navigate(`/tasks/${task.id}`);
+  };
+
   // Filter tasks
   const filteredAndSortedTasks = React.useMemo(() => {
     return tasks
@@ -326,7 +333,11 @@ const Tasks: React.FC = () => {
             </div>
           ) : (
             filteredAndSortedTasks.map((task) => (
-              <div key={task.id} className="task-item">
+              <div
+                key={task.id}
+                className="task-item"
+                onClick={() => handleTaskClick(task)}
+              >
                 <div className="task-checkbox">
                   <input
                     type="checkbox"

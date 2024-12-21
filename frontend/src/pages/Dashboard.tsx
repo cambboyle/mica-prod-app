@@ -1,9 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
+import { useTasks } from '../hooks/useTasks';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { getUpcomingTasks, loading, error } = useTasks();
 
   const handleBoxClick = (route: string, event: React.MouseEvent) => {
     // If the click is on an interactive element, don't navigate
@@ -23,8 +25,7 @@ const Dashboard: React.FC = () => {
   };
 
   const handleTaskClick = (taskId: string) => {
-    // Navigate to specific task
-    console.log('Navigate to task:', taskId);
+    navigate(`/tasks/${taskId}`);
   };
 
   const handleNoteClick = (noteId: string) => {
@@ -37,6 +38,9 @@ const Dashboard: React.FC = () => {
     console.log('Navigate to event:', eventId);
   };
 
+  // Get the 2 most urgent upcoming tasks
+  const upcomingTasks = getUpcomingTasks(2);
+
   return (
     <div className="dashboard">
       <div className="bento-grid">
@@ -48,34 +52,37 @@ const Dashboard: React.FC = () => {
             <h2>Tasks</h2>
           </div>
           <div className="bento-box-content">
-            <div className="task-list">
-              <div 
-                className="task-item"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleTaskClick('task1');
-                }}
-              >
-                <div className="task-status in-progress"></div>
-                <div className="task-info">
-                  <span className="task-title">Project Proposal</span>
-                  <span className="task-due">Due Tomorrow</span>
-                </div>
+            {loading ? (
+              <div className="loading">Loading tasks...</div>
+            ) : error ? (
+              <div className="error">{error}</div>
+            ) : (
+              <div className="task-list">
+                {upcomingTasks.map(task => (
+                  <div 
+                    key={task.id}
+                    className="task-item-dashboard"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTaskClick(task.id);
+                    }}
+                  >
+                    <div className={`task-status ${task.status}`}></div>
+                    <div className="task-info">
+                      <span className="task-title">{task.title}</span>
+                      <span className="task-due">
+                        Due {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date'}
+                      </span>
+                    </div>
+                    {task.priority && (
+                      <div className={`task-priority ${task.priority}`}>
+                        {task.priority}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-              <div 
-                className="task-item"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleTaskClick('task2');
-                }}
-              >
-                <div className="task-status pending"></div>
-                <div className="task-info">
-                  <span className="task-title">Client Presentation</span>
-                  <span className="task-due">Due in 3 days</span>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 

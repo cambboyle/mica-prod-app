@@ -98,3 +98,23 @@ export const toggleTaskStatus = async (req: Request, res: Response) => {
     res.status(400).json({ message: 'Error toggling task status', error });
   }
 };
+
+// Get a single task by ID
+export const getTask = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const task = await taskService.getTask(userId, id);
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    res.json(task);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching task', error });
+  }
+};

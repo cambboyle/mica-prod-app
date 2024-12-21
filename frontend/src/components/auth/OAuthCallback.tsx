@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { User } from '../../types/auth.types';
 import './OAuthCallback.css';
 
 const OAuthCallback: React.FC = () => {
@@ -10,7 +11,7 @@ const OAuthCallback: React.FC = () => {
 
   useEffect(() => {
     const token = searchParams.get('token');
-    const userDataStr = searchParams.get('user');
+    const userDataStr = searchParams.get('userData');
     const error = searchParams.get('error');
 
     if (error) {
@@ -19,29 +20,27 @@ const OAuthCallback: React.FC = () => {
       return;
     }
 
-    if (token && userDataStr) {
-      try {
-        // Parse user data
-        const userData = JSON.parse(decodeURIComponent(userDataStr));
-        
-        // Update auth context with token and user data
-        loginWithToken(token, userData);
-        
-        // Redirect to dashboard
-        navigate('/dashboard');
-      } catch (err) {
-        console.error('Error handling OAuth callback:', err);
-        navigate('/login?error=auth_failed');
-      }
-    } else {
-      navigate('/login?error=incomplete_auth_data');
+    if (!token || !userDataStr) {
+      console.error('Missing token or user data');
+      navigate('/login?error=invalid_oauth_callback');
+      return;
     }
-  }, [searchParams, navigate, loginWithToken]);
+
+    try {
+      const userData = JSON.parse(decodeURIComponent(userDataStr)) as User;
+      loginWithToken(token, userData);
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Failed to process OAuth callback:', err);
+      navigate('/login?error=oauth_processing_failed');
+    }
+  }, [searchParams, loginWithToken, navigate]);
 
   return (
-    <div className="auth-callback-container">
-      <div className="loading-spinner"></div>
-      <p>Completing your sign in...</p>
+    <div className="oauth-callback">
+      <div className="loading-spinner">
+        <p>Processing login...</p>
+      </div>
     </div>
   );
 };

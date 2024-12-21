@@ -16,26 +16,18 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check for existing token and user data
-    const token = authService.getToken();
+    // Initialize auth state from local storage
     const savedUser = authService.getUser();
-    if (token && savedUser) {
+    if (savedUser) {
       setUser(savedUser);
     }
+    setIsLoading(false);
   }, []);
 
   const login = async (credentials: LoginCredentials) => {
@@ -54,9 +46,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginWithToken = (token: string, userData: User) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
+    try {
+      authService.setAuthData(token, userData);
+      setUser(userData);
+      setError(null);
+    } catch (err) {
+      setError('OAuth login failed');
+      console.error('OAuth login error:', err);
+      throw err;
+    }
   };
 
   const register = async (credentials: RegisterCredentials) => {
@@ -89,9 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const clearError = () => {
-    setError(null);
-  };
+  const clearError = () => setError(null);
 
   const value = {
     user,
@@ -102,8 +98,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loginWithToken,
     register,
     logout,
-    clearError,
+    clearError
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
+
+const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+export { AuthProvider, useAuth };
