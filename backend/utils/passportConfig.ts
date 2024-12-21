@@ -3,6 +3,20 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as LocalStrategy } from 'passport-local';
 import User from '../models/userModel';
 
+// Validate required environment variables
+if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+  console.error('Missing required Google OAuth environment variables');
+  process.exit(1);
+}
+
+// Get the base URL for callbacks
+const getBaseUrl = () => {
+  if (process.env.NODE_ENV === 'production') {
+    return process.env.BACKEND_URL || 'https://your-production-domain.com';
+  }
+  return 'http://localhost:5000';
+};
+
 // Serialize user for the session
 passport.serializeUser((user: any, done) => {
   done(null, user.id);
@@ -51,40 +65,57 @@ passport.use(
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL: process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:5000/auth/google/callback'  // For test page
-        : `${process.env.FRONTEND_URL}/auth/google/callback`,  // For production
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: `${getBaseUrl()}/api/auth/google/callback`,
+      scope: ['profile', 'email'],
       proxy: true
     },
-    async (req: any, accessToken: string, refreshToken: string, profile: any, done: any) => {
+    async (accessToken, refreshToken, profile, done) => {
       try {
-        // Check if user already exists with this email
+        console.log('Google OAuth callback received:', { profileId: profile.id });
+
+        // Check if user already exists
         let user = await User.findOne({
-          where: { email: profile.emails![0].value }
+          where: {
+            googleId: profile.id
+          }
         });
 
-        if (user) {
-          // If user exists but doesn't have googleId, update it
-          if (!user.googleId) {
+        if (!user && profile.emails && profile.emails.length > 0) {
+          // Check if user exists with the email
+          user = await User.findOne({
+            where: {
+              email: profile.emails[0].value
+            }
+          });
+
+          if (user) {
+            // Link Google account to existing user
             user.googleId = profile.id;
             await user.save();
+            console.log('Linked Google account to existing user:', user.id);
+          } else {
+            // Create new user
+            user = await User.create({
+              googleId: profile.id,
+              email: profile.emails[0].value,
+              displayName: profile.displayName || profile.emails[0].value.split('@')[0],
+              profilePic: profile.photos?.[0]?.value
+            });
+            console.log('Created new user from Google profile:', user.id);
           }
-          return done(null, user);
         }
 
-        // Create new user if doesn't exist
-        user = await User.create({
-          email: profile.emails![0].value,
-          googleId: profile.id,
-          displayName: profile.displayName,
-          profilePic: profile.photos?.[0]?.value
-        });
+        if (!user) {
+          console.error('Failed to create/find user from Google profile');
+          return done(null, false, { message: 'Failed to create user from Google profile' });
+        }
 
         return done(null, user);
       } catch (error) {
-        return done(error);
+        console.error('Google Strategy Error:', error);
+        return done(error as Error);
       }
     }
   )

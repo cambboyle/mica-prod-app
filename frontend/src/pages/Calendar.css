@@ -1,0 +1,21 @@
+.calendar-container {
+  padding: 2rem;
+}
+
+.calendar-container h1 {
+  margin-bottom: 2rem;
+  color: #2c3e50;
+}
+
+.calendar-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-content p {
+  color: #666;
+  text-align: center;
+  font-size: 1.1rem;
+}

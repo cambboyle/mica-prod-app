@@ -5,7 +5,6 @@ import crypto from 'crypto';
 import User from '../models/userModel';
 import { body, validationResult } from 'express-validator';
 import { sendEmail } from '../utils/email';
-import { Op } from 'sequelize';
 
 const router = express.Router();
 
@@ -21,62 +20,117 @@ const validateResetPassword = [
   body('newPassword').isLength({ min: 6 })
 ];
 
-// Register new user
-router.post('/register', validateRegistration, async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+// Google OAuth routes
+router.get('/google',
+  (req, res, next) => {
+    console.log('Starting Google OAuth flow');
+    next();
+  },
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    session: false
+  })
+);
 
-    const { email, password, displayName } = req.body;
+router.get('/google/callback',
+  (req, res, next) => {
+    console.log('Received Google callback');
+    passport.authenticate('google', { session: false }, (err, user, info) => {
+      console.log('Google auth result:', { err: err?.message, userId: user?.id, info });
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Email already registered' });
-    }
+      if (err) {
+        console.error('Google OAuth Error:', err);
+        return res.redirect(`${process.env.FRONTEND_URL}/login?error=${encodeURIComponent(err.message)}`);
+      }
 
-    // Create new user
-    const user = await User.create({
-      email,
-      password,
-      displayName
-    });
+      if (!user) {
+        console.error('No user from Google OAuth:', info);
+        return res.redirect(`${process.env.FRONTEND_URL}/login?error=authentication_failed`);
+      }
 
-    // Generate JWT token
+      const token = jwt.sign(
+        { id: user.id },
+        process.env.JWT_SECRET!,
+        { expiresIn: '24h' }
+      );
+
+      // Include minimal user data in the redirect
+      const userData = {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        profilePic: user.profilePic
+      };
+
+      // Redirect to frontend with token and user data
+      const userDataStr = encodeURIComponent(JSON.stringify(userData));
+      res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}&user=${userDataStr}`);
+    })(req, res, next);
+  }
+);
+
+// Local login
+router.post('/login',
+  passport.authenticate('local', { session: false }),
+  (req, res) => {
     const token = jwt.sign(
-      { id: user.id },
+      { id: req.user!.id },
       process.env.JWT_SECRET!,
       { expiresIn: '24h' }
     );
 
-    res.status(201).json({
+    res.json({
       token,
-      user: {
-        id: user.id,
-        email: user.email,
-        displayName: user.displayName
-      }
+      user: req.user
     });
-  } catch (error) {
-    res.status(500).json({ message: 'Error creating user', error });
   }
-});
+);
 
-// Local login
-router.post('/login', passport.authenticate('local'), (req, res) => {
-  const token = jwt.sign(
-    { id: req.user!.id },
-    process.env.JWT_SECRET!,
-    { expiresIn: '24h' }
-  );
+// Register new user
+router.post('/register',
+  validateRegistration,
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-  res.json({
-    token,
-    user: req.user
-  });
-});
+      const { email, password, displayName } = req.body;
+
+      // Check if user already exists
+      const existingUser = await User.findOne({ where: { email } });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Email already registered' });
+      }
+
+      // Create new user
+      const user = await User.create({
+        email,
+        password,
+        displayName
+      });
+
+      const token = jwt.sign(
+        { id: user.id },
+        process.env.JWT_SECRET!,
+        { expiresIn: '24h' }
+      );
+
+      res.status(201).json({
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          displayName: user.displayName
+        }
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.status(500).json({ message: 'Error creating user' });
+    }
+  }
+);
 
 // Forgot password
 router.post('/forgot-password', async (req, res) => {
@@ -85,37 +139,30 @@ router.post('/forgot-password', async (req, res) => {
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
-      // Don't reveal that the user doesn't exist
       return res.json({ message: 'If an account exists with that email, you will receive a password reset link' });
     }
 
     // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
+    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
 
-    // Save reset token to user
     await user.update({
       resetToken,
       resetTokenExpiry
     });
 
-    // Send reset email
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    // Send email with reset link
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
     await sendEmail({
       to: user.email,
       subject: 'Password Reset Request',
-      html: `
-        <p>You requested a password reset.</p>
-        <p>Click <a href="${resetUrl}">here</a> to reset your password.</p>
-        <p>If you didn't request this, please ignore this email.</p>
-        <p>This link will expire in 1 hour.</p>
-      `
+      text: `Please click on the following link to reset your password: ${resetUrl}`
     });
 
     res.json({ message: 'If an account exists with that email, you will receive a password reset link' });
   } catch (error) {
     console.error('Password reset error:', error);
-    res.status(500).json({ message: 'Error processing password reset' });
+    res.status(500).json({ message: 'Error sending password reset email' });
   }
 });
 
@@ -128,11 +175,12 @@ router.post('/reset-password', validateResetPassword, async (req, res) => {
     }
 
     const { token, newPassword } = req.body;
+
     const user = await User.findOne({
       where: {
         resetToken: token,
         resetTokenExpiry: {
-          [Op.gt]: new Date() // Token hasn't expired
+          [Op.gt]: new Date()
         }
       }
     });
@@ -142,54 +190,16 @@ router.post('/reset-password', validateResetPassword, async (req, res) => {
     }
 
     // Update password and clear reset token
-    await user.update({
-      password: newPassword,
-      resetToken: null,
-      resetTokenExpiry: null
-    });
+    user.password = newPassword;
+    user.resetToken = null;
+    user.resetTokenExpiry = null;
+    await user.save();
 
     res.json({ message: 'Password has been reset successfully' });
   } catch (error) {
     console.error('Password reset error:', error);
     res.status(500).json({ message: 'Error resetting password' });
   }
-});
-
-// Google OAuth routes
-router.get('/google',
-  passport.authenticate('google', {
-    scope: ['profile', 'email']
-  })
-);
-
-router.get('/google/callback',
-  (req, res, next) => {
-    passport.authenticate('google', { session: false }, (err, user, info) => {
-      if (err) {
-        console.error('Google OAuth Error:', err);
-        return res.redirect('/test-auth.html?error=' + encodeURIComponent(err.message));
-      }
-      
-      if (!user) {
-        console.error('No user from Google OAuth:', info);
-        return res.redirect('/test-auth.html?error=Failed to authenticate with Google');
-      }
-
-      const token = jwt.sign(
-        { id: user.id },
-        process.env.JWT_SECRET!,
-        { expiresIn: '24h' }
-      );
-
-      // Always redirect to test page for now
-      res.redirect(`/test-auth.html?token=${token}`);
-    })(req, res, next);
-  }
-);
-
-// Get current user
-router.get('/me', passport.authenticate('jwt', { session: false }), (req, res) => {
-  res.json(req.user);
 });
 
 // Logout

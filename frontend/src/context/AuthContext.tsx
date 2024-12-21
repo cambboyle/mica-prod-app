@@ -1,18 +1,17 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import axios from 'axios';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import authService from '../services/auth.service';
+import { User, LoginCredentials, RegisterCredentials } from '../types/auth.types';
 
 interface AuthContextType {
+  user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  user: any | null;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, displayName: string) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  loginWithToken: (token: string, userData: User) => void;
+  register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => Promise<void>;
-  googleLogin: () => Promise<void>;
-  verifyEmail: (token: string) => Promise<void>;
-  sendPasswordResetEmail: (email: string) => Promise<void>;
-  resetPassword: (token: string, newPassword: string) => Promise<void>;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,119 +25,84 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const login = useCallback(async (email: string, password: string) => {
+  useEffect(() => {
+    // Check for existing token and user data
+    const token = authService.getToken();
+    const savedUser = authService.getUser();
+    if (token && savedUser) {
+      setUser(savedUser);
+    }
+  }, []);
+
+  const login = async (credentials: LoginCredentials) => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/auth/login`, {
-        email,
-        password,
-      });
-      setUser(response.data.user);
-      localStorage.setItem('token', response.data.token);
-      setIsLoading(false);
+      const response = await authService.login(credentials);
+      setUser(response.user);
     } catch (err) {
       setError('Login failed');
+      console.error('Login error:', err);
+      throw err;
+    } finally {
       setIsLoading(false);
-      throw new Error('Login failed');
     }
-  }, []);
+  };
 
-  const register = useCallback(async (email: string, password: string, displayName: string) => {
+  const loginWithToken = (token: string, userData: User) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+  };
+
+  const register = async (credentials: RegisterCredentials) => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/auth/register`, {
-        email,
-        password,
-        displayName,
-      });
-      setUser(response.data.user);
-      localStorage.setItem('token', response.data.token);
-      setIsLoading(false);
+      const response = await authService.register(credentials);
+      setUser(response.user);
     } catch (err) {
       setError('Registration failed');
+      console.error('Registration error:', err);
+      throw err;
+    } finally {
       setIsLoading(false);
-      throw new Error('Registration failed');
     }
-  }, []);
+  };
 
-  const logout = useCallback(async () => {
+  const logout = async () => {
     try {
       setIsLoading(true);
-      await axios.post(`${process.env.REACT_APP_API_URL}/auth/logout`);
+      setError(null);
+      await authService.logout();
       setUser(null);
-      localStorage.removeItem('token');
-      setIsLoading(false);
     } catch (err) {
       setError('Logout failed');
+      console.error('Logout error:', err);
+      throw err;
+    } finally {
       setIsLoading(false);
-      throw new Error('Logout failed');
     }
-  }, []);
+  };
 
-  const googleLogin = useCallback(async () => {
-    window.location.href = `${process.env.REACT_APP_API_URL}/auth/google`;
-  }, []);
-
-  const verifyEmail = useCallback(async (token: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      await axios.post(`${process.env.REACT_APP_API_URL}/auth/verify-email`, { token });
-      setIsLoading(false);
-    } catch (err) {
-      setError('Email verification failed');
-      setIsLoading(false);
-      throw new Error('Email verification failed');
-    }
-  }, []);
-
-  const sendPasswordResetEmail = useCallback(async (email: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      await axios.post(`${process.env.REACT_APP_API_URL}/auth/forgot-password`, { email });
-      setIsLoading(false);
-    } catch (err) {
-      setError('Failed to send password reset email');
-      setIsLoading(false);
-      throw new Error('Failed to send password reset email');
-    }
-  }, []);
-
-  const resetPassword = useCallback(async (token: string, newPassword: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      await axios.post(`${process.env.REACT_APP_API_URL}/auth/reset-password`, {
-        token,
-        newPassword,
-      });
-      setIsLoading(false);
-    } catch (err) {
-      setError('Password reset failed');
-      setIsLoading(false);
-      throw new Error('Password reset failed');
-    }
-  }, []);
+  const clearError = () => {
+    setError(null);
+  };
 
   const value = {
+    user,
     isAuthenticated: !!user,
     isLoading,
-    user,
     error,
     login,
+    loginWithToken,
     register,
     logout,
-    googleLogin,
-    verifyEmail,
-    sendPasswordResetEmail,
-    resetPassword,
+    clearError,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

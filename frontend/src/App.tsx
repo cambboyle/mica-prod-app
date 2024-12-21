@@ -1,42 +1,46 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/auth/PrivateRoute';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
-import ForgotPassword from './components/auth/ForgotPassword';
-import ResetPassword from './components/auth/ResetPassword';
-import VerifyEmail from './components/auth/VerifyEmail';
+import OAuthCallback from './components/auth/OAuthCallback';
 import Dashboard from './pages/Dashboard';
 import Notes from './pages/Notes';
+import Tasks from './pages/Tasks';
+import Calendar from './pages/Calendar';
+import Settings from './pages/Settings';
+import Layout from './components/layout/Layout';
 
 import './styles/auth.css';
 import './styles/layout.css';
 
-function App() {
+const App: React.FC = () => {
   return (
-    <Router>
-      <AuthProvider>
-        <div className="app-container">
-          <Routes>
-            {/* Auth Routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password/:token" element={<ResetPassword />} />
-            <Route path="/verify-email/:token" element={<VerifyEmail />} />
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Auth Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/auth/callback" element={<OAuthCallback />} />
 
-            {/* Protected Routes */}
-            <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-            <Route path="/notes" element={<PrivateRoute><Notes /></PrivateRoute>} />
-            
-            {/* Default Route */}
-            <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-          </Routes>
-        </div>
-      </AuthProvider>
-    </Router>
+          {/* Protected Routes */}
+          <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="notes" element={<Notes />} />
+            <Route path="tasks" element={<Tasks />} />
+            <Route path="calendar" element={<Calendar />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
+
+          {/* Catch-all Route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
-}
+};
 
 export default App;

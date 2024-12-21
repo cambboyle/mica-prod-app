@@ -5,21 +5,36 @@ class Task extends Model {}
 
 Task.init(
   {
-    title: { type: DataTypes.STRING, allowNull: false },
-    description: { type: DataTypes.TEXT, allowNull: true },
-    dueDate: { type: DataTypes.DATE, allowNull: true },
-    completed: { type: DataTypes.BOOLEAN, defaultValue: false },
+    title: { 
+      type: DataTypes.STRING(255), 
+      allowNull: false 
+    },
+    description: { 
+      type: DataTypes.TEXT, 
+      allowNull: true 
+    },
+    status: { 
+      type: DataTypes.ENUM('pending', 'in-progress', 'completed'),
+      defaultValue: 'pending'
+    },
     priority: { 
       type: DataTypes.ENUM('low', 'medium', 'high'),
-      defaultValue: 'medium'
+      allowNull: true
     },
-    status: {
-      type: DataTypes.ENUM('todo', 'in_progress', 'done'),
-      defaultValue: 'todo'
+    dueDate: { 
+      type: DataTypes.DATE, 
+      allowNull: true 
     },
-    projectId: { type: DataTypes.INTEGER, allowNull: true }, // Foreign key linking to Projects
+    projectId: { 
+      type: DataTypes.INTEGER, 
+      allowNull: true 
+    }
   },
-  { sequelize, modelName: 'task' }
+  { 
+    sequelize, 
+    modelName: 'task',
+    timestamps: true
+  }
 );
 
 export default Task;

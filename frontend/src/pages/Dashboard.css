@@ -1,0 +1,351 @@
+.dashboard {
+  padding: 24px;
+  background-color: #fafafa;
+  min-height: 100%;
+}
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: minmax(200px, auto);
+  gap: 12px;
+  width: 100%;
+}
+
+.tasks-box {
+  grid-column: span 2;
+  grid-row: span 1;
+}
+
+.calendar-view-box {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.notes-box {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.todos-box {
+  grid-column: span 1;
+  grid-row: span 1;
+}
+
+.upcoming-box {
+  grid-column: span 1;
+  grid-row: span 1;
+}
+
+.bento-box {
+  background: white;
+  border-radius: 32px;
+  border: 1px solid #eaeaea;
+  padding: 20px;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  cursor: pointer;
+}
+
+.bento-box:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.bento-box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.bento-box-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.view-all {
+  font-size: 0.9rem;
+  color: #666;
+  cursor: pointer;
+}
+
+.view-all:hover {
+  color: #333;
+}
+
+.bento-box-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.task-item:hover {
+  transform: translateY(-1px);
+  background: #f0f0f0;
+}
+
+.task-item:active {
+  transform: translateY(0);
+}
+
+.task-status {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.task-status.in-progress {
+  background-color: #3498db;
+}
+
+.task-status.pending {
+  background-color: #f1c40f;
+}
+
+.task-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.task-title {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.task-due {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.note-item {
+  background: #f8f9fa;
+  border-radius: 16px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.note-item:hover {
+  transform: translateY(-1px);
+  background: #f0f0f0;
+}
+
+.note-item:active {
+  transform: translateY(0);
+}
+
+.note-content h3 {
+  font-size: 0.95rem;
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.note-content p {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.note-time {
+  font-size: 0.8rem;
+  color: #999;
+  display: block;
+  margin-top: 8px;
+}
+
+.add-note-btn {
+  width: 100%;
+  padding: 12px;
+  border: 1px dashed #ddd;
+  background: none;
+  border-radius: 8px;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.add-note-btn:hover {
+  background: #f8f9fa;
+  border-color: #ccc;
+  color: #333;
+}
+
+.todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  position: relative;
+}
+
+.todo-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+
+.todo-item span {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.mini-calendar {
+  border: 1px solid #eaeaea;
+  border-radius: 20px;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-header {
+  background: #f8f9fa;
+  padding: 12px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #333;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.calendar-grid {
+  flex: 1;
+  padding: 12px;
+}
+
+.calendar-placeholder {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.event-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.event-item:hover {
+  transform: translateY(-1px);
+  background: #f0f0f0;
+}
+
+.event-item:active {
+  transform: translateY(0);
+}
+
+.event-time {
+  font-size: 0.85rem;
+  color: #666;
+  min-width: 70px;
+}
+
+.event-details h3 {
+  font-size: 0.95rem;
+  margin: 0 0 4px 0;
+  color: #333;
+}
+
+.event-details p {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0;
+}
+
+@media (max-width: 1200px) {
+  .bento-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .tasks-box,
+  .calendar-view-box,
+  .notes-box,
+  .todos-box,
+  .upcoming-box {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 16px;
+  }
+
+  .bento-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .bento-box {
+    padding: 16px;
+  }
+}
