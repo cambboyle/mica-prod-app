@@ -12,32 +12,23 @@
 }
 
 .modal-content {
-  background-color: white;
+  background: white;
+  padding: 20px;
   border-radius: 8px;
   width: 90%;
-  max-width: 600px;
+  max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-  animation: modal-appear 0.2s ease-out;
-}
-
-@keyframes modal-appear {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  position: relative;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
   border-bottom: 1px solid #eee;
 }
 
@@ -51,32 +42,24 @@
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: #666;
   cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 4px;
-  line-height: 1;
-  transition: background-color 0.2s;
+  color: #666;
+  padding: 5px;
 }
 
 .close-button:hover {
-  background-color: #f5f5f5;
   color: #333;
 }
 
-form {
-  padding: 1.5rem;
-}
-
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 15px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 5px;
+  color: #555;
   font-weight: 500;
-  color: #333;
 }
 
 .form-group input[type="text"],
@@ -84,11 +67,10 @@ form {
 .form-group select,
 .form-group textarea {
   width: 100%;
-  padding: 0.75rem;
+  padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-size: 1rem;
-  transition: border-color 0.2s;
+  font-size: 14px;
 }
 
 .form-group input[type="text"]:focus,
@@ -97,57 +79,118 @@ form {
 .form-group textarea:focus {
   outline: none;
   border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
 }
 
-.form-group textarea {
-  resize: vertical;
-  min-height: 100px;
+.error-message {
+  color: #dc3545;
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #fff3f3;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
 }
 
 .cancel-button,
 .submit-button {
-  padding: 0.75rem 1.5rem;
+  padding: 8px 16px;
   border-radius: 4px;
-  font-size: 1rem;
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .cancel-button {
-  background-color: white;
+  background-color: #fff;
   border: 1px solid #ddd;
   color: #666;
 }
 
 .cancel-button:hover {
-  background-color: #f5f5f5;
+  background-color: #f8f8f8;
   border-color: #ccc;
 }
 
 .submit-button {
   background-color: #0066cc;
-  border: none;
+  border: 1px solid #0066cc;
   color: white;
 }
 
 .submit-button:hover {
   background-color: #0052a3;
+  border-color: #0052a3;
 }
 
-.error-message {
-  background-color: #ffebee;
-  color: #d32f2f;
-  padding: 0.75rem 1rem;
+/* Tags Input Styles */
+.tags-input-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tags-input-container input {
+  flex-grow: 1;
+}
+
+.add-tag-button {
+  padding: 8px 16px;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
   border-radius: 4px;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
+  cursor: pointer;
+  color: #333;
+}
+
+.add-tag-button:disabled {
+  background-color: #f8f8f8;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.add-tag-button:not(:disabled):hover {
+  background-color: #e8e8e8;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background-color: #e8f0fe;
+  border-radius: 16px;
+  font-size: 14px;
+  color: #1a73e8;
+}
+
+.remove-tag {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.remove-tag:hover {
+  color: #dc3545;
 }
 
 @media (max-width: 768px) {

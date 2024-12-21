@@ -1,62 +1,77 @@
 import React, { useState, useEffect } from 'react';
 import './TaskModal.css';
-import { Task } from '../services/taskService';
+import { Task, TaskPriority, TaskCategory } from '../types/task.types';
 
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: Omit<Task, 'id' | 'status'>) => void;
-  initialData?: Task;
-  mode: 'add' | 'edit';
+  onSubmit: (task: Partial<Task>) => void;
+  initialTask?: Task;
 }
 
 const TaskModal: React.FC<TaskModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
-  initialData,
-  mode,
+  initialTask,
 }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState<Task['priority']>('medium');
+  const [priority, setPriority] = useState<TaskPriority>(TaskPriority.MEDIUM);
+  const [category, setCategory] = useState<TaskCategory>(TaskCategory.OTHER);
+  const [tags, setTags] = useState<string[]>([]);
   const [dueDate, setDueDate] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [newTag, setNewTag] = useState('');
 
   useEffect(() => {
-    if (isOpen && initialData) {
-      setTitle(initialData.title);
-      setDescription(initialData.description || '');
-      setPriority(initialData.priority);
-      setDueDate(initialData.dueDate ? new Date(initialData.dueDate).toISOString().split('T')[0] : '');
+    if (initialTask) {
+      setTitle(initialTask.title || '');
+      setDescription(initialTask.description || '');
+      setPriority(initialTask.priority || TaskPriority.MEDIUM);
+      setCategory(initialTask.category || TaskCategory.OTHER);
+      setTags(initialTask.tags || []);
+      setDueDate(initialTask.dueDate ? new Date(initialTask.dueDate).toISOString().split('T')[0] : '');
     } else if (isOpen) {
-      // Reset form for new task
+      // Reset form when opening for new task
       setTitle('');
       setDescription('');
-      setPriority('medium');
+      setPriority(TaskPriority.MEDIUM);
+      setCategory(TaskCategory.OTHER);
+      setTags([]);
       setDueDate('');
     }
-    setError(null);
-  }, [isOpen, initialData]);
+  }, [initialTask, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validation
     if (!title.trim()) {
       setError('Title is required');
       return;
     }
 
-    const taskData: Omit<Task, 'id' | 'status'> = {
+    const taskData: Partial<Task> = {
       title: title.trim(),
-      description: description.trim() || undefined,
+      description: description.trim(),
       priority,
-      dueDate: dueDate ? new Date(dueDate) : undefined,
+      category,
+      tags,
+      ...(dueDate && { dueDate }),
     };
 
     onSubmit(taskData);
     onClose();
+  };
+
+  const handleAddTag = () => {
+    if (newTag.trim() && !tags.includes(newTag.trim())) {
+      setTags([...tags, newTag.trim()]);
+      setNewTag('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
   if (!isOpen) return null;
@@ -65,66 +80,114 @@ const TaskModal: React.FC<TaskModalProps> = ({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>{mode === 'add' ? 'Add New Task' : 'Edit Task'}</h2>
+          <h2>{initialTask ? 'Edit Task' : 'New Task'}</h2>
           <button className="close-button" onClick={onClose}>&times;</button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          {error && <div className="error-message">{error}</div>}
-          
           <div className="form-group">
-            <label htmlFor="title">Title *</label>
+            <label>Title</label>
             <input
-              id="title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter task title"
-              autoFocus
+              placeholder="Task title"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="description">Description</label>
+            <label>Description</label>
             <textarea
-              id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter task description"
-              rows={3}
+              placeholder="Task description"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="priority">Priority</label>
+            <label>Priority</label>
             <select
-              id="priority"
               value={priority}
-              onChange={(e) => setPriority(e.target.value as Task['priority'])}
+              onChange={(e) => setPriority(e.target.value as TaskPriority)}
             >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
+              <option value={TaskPriority.LOW}>Low</option>
+              <option value={TaskPriority.MEDIUM}>Medium</option>
+              <option value={TaskPriority.HIGH}>High</option>
             </select>
           </div>
 
           <div className="form-group">
-            <label htmlFor="dueDate">Due Date</label>
+            <label>Category</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value as TaskCategory)}
+            >
+              <option value={TaskCategory.WORK}>Work</option>
+              <option value={TaskCategory.PERSONAL}>Personal</option>
+              <option value={TaskCategory.SHOPPING}>Shopping</option>
+              <option value={TaskCategory.HEALTH}>Health</option>
+              <option value={TaskCategory.FINANCE}>Finance</option>
+              <option value={TaskCategory.OTHER}>Other</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Tags</label>
+            <div className="tags-input-container">
+              <input
+                type="text"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                placeholder="Add a tag"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddTag();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleAddTag}
+                className="add-tag-button"
+                disabled={!newTag.trim()}
+              >
+                Add
+              </button>
+            </div>
+            <div className="tags-container">
+              {tags.map((tag) => (
+                <span key={tag} className="tag">
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(tag)}
+                    className="remove-tag"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Due Date</label>
             <input
-              id="dueDate"
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
             />
           </div>
 
+          {error && <div className="error-message">{error}</div>}
+
           <div className="modal-actions">
-            <button type="button" onClick={onClose} className="cancel-button">
+            <button type="button" className="cancel-button" onClick={onClose}>
               Cancel
             </button>
             <button type="submit" className="submit-button">
-              {mode === 'add' ? 'Add Task' : 'Save Changes'}
+              {initialTask ? 'Update' : 'Create'}
             </button>
           </div>
         </form>
