@@ -1,5 +1,9 @@
 import app from './app';
-import sequelize from './utils/sequelize';
+import { syncDatabase } from './models';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 
@@ -9,7 +13,7 @@ import './models/taskModel';
 const start = async () => {
   try {
     // Sync database
-    await sequelize.sync();
+    await syncDatabase();
     console.log('Database synced successfully');
 
     // Start server

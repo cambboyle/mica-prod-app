@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mica Auth Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button {
+            padding: 10px;
+            cursor: pointer;
+        }
+        #response {
+            white-space: pre-wrap;
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .status.logged-in {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status.logged-out {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mica Authentication Test</h1>
+        
+        <div id="authStatus" class="status logged-out">
+            Not logged in
+        </div>
+
+        <div class="form-group">
+            <h2>Register</h2>
+            <input type="email" id="registerEmail" placeholder="Email">
+            <input type="password" id="registerPassword" placeholder="Password">
+            <input type="text" id="registerDisplayName" placeholder="Display Name">
+            <button onclick="register()">Register</button>
+        </div>
+
+        <div class="form-group">
+            <h2>Login</h2>
+            <input type="email" id="loginEmail" placeholder="Email">
+            <input type="password" id="loginPassword" placeholder="Password">
+            <button onclick="login()">Login</button>
+        </div>
+
+        <div class="form-group">
+            <h2>Google OAuth</h2>
+            <button onclick="googleLogin()">Login with Google</button>
+        </div>
+
+        <div class="form-group">
+            <h2>Test Protected Route</h2>
+            <button onclick="getMe()">Get Current User</button>
+            <button onclick="logout()" id="logoutBtn" style="display: none;">Logout</button>
+        </div>
+
+        <div>
+            <h2>Response:</h2>
+            <pre id="response"></pre>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000';
+        let token = localStorage.getItem('token');
+        
+        // Update UI based on auth status
+        function updateAuthStatus() {
+            const statusDiv = document.getElementById('authStatus');
+            const logoutBtn = document.getElementById('logoutBtn');
+            
+            if (token) {
+                statusDiv.className = 'status logged-in';
+                statusDiv.textContent = 'Logged in';
+                logoutBtn.style.display = 'block';
+            } else {
+                statusDiv.className = 'status logged-out';
+                statusDiv.textContent = 'Not logged in';
+                logoutBtn.style.display = 'none';
+            }
+        }
+
+        async function register() {
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const displayName = document.getElementById('registerDisplayName').value;
+
+            try {
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password, displayName })
+                });
+                const data = await response.json();
+                document.getElementById('response').textContent = JSON.stringify(data, null, 2);
+                
+                if (data.token) {
+                    token = data.token;
+                    localStorage.setItem('token', token);
+                    updateAuthStatus();
+                }
+            } catch (error) {
+                document.getElementById('response').textContent = error.message;
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                document.getElementById('response').textContent = JSON.stringify(data, null, 2);
+                
+                if (data.token) {
+                    token = data.token;
+                    localStorage.setItem('token', token);
+                    updateAuthStatus();
+                }
+            } catch (error) {
+                document.getElementById('response').textContent = error.message;
+            }
+        }
+
+        function googleLogin() {
+            window.location.href = `${API_URL}/auth/google`;
+        }
+
+        async function getMe() {
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+                document.getElementById('response').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('response').textContent = error.message;
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch(`${API_URL}/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                token = null;
+                localStorage.removeItem('token');
+                updateAuthStatus();
+                document.getElementById('response').textContent = 'Logged out successfully';
+            } catch (error) {
+                document.getElementById('response').textContent = error.message;
+            }
+        }
+
+        // Handle OAuth callback
+        const urlParams = new URLSearchParams(window.location.search);
+        const newToken = urlParams.get('token');
+        const error = urlParams.get('error');
+
+        if (error) {
+            document.getElementById('response').textContent = `Authentication Error: ${error}`;
+        } else if (newToken) {
+            token = newToken;
+            localStorage.setItem('token', token);
+            updateAuthStatus();
+            document.getElementById('response').textContent = 'Successfully logged in with Google!';
+            // Remove token from URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        // Initialize UI
+        updateAuthStatus();
+    </script>
+</body>
+</html>
