@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import session from 'express-session';
 import passport from 'passport';
 import taskRoutes from './routes/taskRoutes';
+import todoRoutes from './routes/todoRoutes';
 import authRoutes from './routes/authRoutes';
 import './utils/passportConfig'; // Import passport configuration
 
@@ -39,6 +40,7 @@ app.use(passport.session());
 
 // Routes
 app.use('/api/tasks', taskRoutes);
+app.use('/api/todos', todoRoutes);
 
 // Auth routes - keep only one route for auth
 app.use('/api/auth', authRoutes);

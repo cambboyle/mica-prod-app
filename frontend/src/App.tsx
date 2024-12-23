@@ -8,10 +8,11 @@ import OAuthCallback from './components/auth/OAuthCallback';
 import Dashboard from './pages/Dashboard';
 import Notes from './pages/Notes';
 import Tasks from './pages/Tasks';
-import TaskView from './pages/TaskView'; // added import statement
+import TaskView from './pages/TaskView';
 import Calendar from './pages/Calendar';
 import Settings from './pages/Settings';
 import Layout from './components/layout/Layout';
+import Todos from './pages/Todos';
 
 import './styles/auth.css';
 import './styles/layout.css';
@@ -32,7 +33,8 @@ const App: React.FC = () => {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="notes" element={<Notes />} />
             <Route path="tasks" element={<Tasks />} />
-            <Route path="tasks/:taskId" element={<TaskView />} /> // added route
+            <Route path="tasks/:taskId" element={<TaskView />} />
+            <Route path="todos" element={<Todos />} />
             <Route path="calendar" element={<Calendar />} />
             <Route path="settings" element={<Settings />} />
           </Route>

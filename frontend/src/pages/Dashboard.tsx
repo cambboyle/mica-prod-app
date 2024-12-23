@@ -1,11 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 import { useTasks } from '../hooks/useTasks';
+import { useTodos } from '../hooks/useTodos';
+import { Todo, TodoStatus } from '../types/todo.types';
+import TodoModal from '../components/TodoModal';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { getUpcomingTasks, loading, error } = useTasks();
+  const { getUpcomingTasks, loading: tasksLoading, error: tasksError } = useTasks();
+  const { todos, loading, error, handleToggleTodo, handleDeleteTodo, handleCreateTodo } = useTodos();
+  const [showTodoModal, setShowTodoModal] = useState(false);
 
   const handleBoxClick = (route: string, event: React.MouseEvent) => {
     // If the click is on an interactive element, don't navigate
@@ -14,7 +19,6 @@ const Dashboard: React.FC = () => {
       target.tagName === 'INPUT' || 
       target.tagName === 'BUTTON' ||
       target.closest('.task-item') ||
-      target.closest('.todo-item') ||
       target.closest('.note-item') ||
       target.closest('.event-item') ||
       target.closest('.add-note-btn')
@@ -52,10 +56,10 @@ const Dashboard: React.FC = () => {
             <h2>Tasks</h2>
           </div>
           <div className="bento-box-content">
-            {loading ? (
+            {tasksLoading ? (
               <div className="loading">Loading tasks...</div>
-            ) : error ? (
-              <div className="error">{error}</div>
+            ) : tasksError ? (
+              <div className="error">{tasksError}</div>
             ) : (
               <div className="task-list">
                 {upcomingTasks.map(task => (
@@ -161,32 +165,82 @@ const Dashboard: React.FC = () => {
         >
           <div className="bento-box-header">
             <h2>To-dos</h2>
+            <button 
+              className="add-todo-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowTodoModal(true);
+              }}
+            >
+              <i className="fas fa-plus"></i>
+            </button>
           </div>
           <div className="bento-box-content">
-            <div className="todo-list">
-              <div className="todo-item">
-                <input 
-                  type="checkbox" 
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <span>Review documentation</span>
-              </div>
-              <div className="todo-item">
-                <input 
-                  type="checkbox" 
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <span>Send follow-up email</span>
-              </div>
-              <div className="todo-item">
-                <input 
-                  type="checkbox" 
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <span>Update weekly report</span>
-              </div>
-            </div>
+            {loading ? (
+              <div className="loading">Loading todos...</div>
+            ) : error ? (
+              <div className="error">{error}</div>
+            ) : (
+              <>
+                <div className="todo-list">
+                  {todos.slice(0, 2).map((todo: Todo) => (
+                    <div key={todo.id} className="todo-item">
+                      <input 
+                        type="checkbox"
+                        checked={todo.status === TodoStatus.COMPLETED}
+                        onChange={() => handleToggleTodo(todo.id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <span 
+                        className={todo.status === TodoStatus.COMPLETED ? 'completed' : ''}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleTodo(todo.id);
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        {todo.title}
+                      </span>
+                      {todo.status === TodoStatus.COMPLETED && (
+                        <button 
+                          className="delete-todo-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteTodo(todo.id);
+                          }}
+                        >
+                          <i className="fas fa-times"></i>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {todos.length === 0 && (
+                    <div className="todo-empty">No todos yet</div>
+                  )}
+                </div>
+                {todos.length > 2 && (
+                  <div className="view-more-todos">
+                    <span onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/todos');
+                    }}>
+                      View more ({todos.length - 2})
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
           </div>
+          {showTodoModal && (
+            <TodoModal
+              isOpen={showTodoModal}
+              onClose={() => setShowTodoModal(false)}
+              onSubmit={async (todoData) => {
+                await handleCreateTodo(todoData);
+                setShowTodoModal(false);
+              }}
+            />
+          )}
         </div>
 
         <div 

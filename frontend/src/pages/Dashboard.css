@@ -55,16 +55,20 @@
 
 .bento-box-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  justify-content: space-between;
+  padding: 12px 16px;
+}
+
+.todos-box .bento-box-header {
+  border-bottom: 1px solid var(--border-color);
 }
 
 .bento-box-header h2 {
+  margin: 0;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #333;
-  margin: 0;
+  color: var(--text-primary);
 }
 
 .view-all {
@@ -242,30 +246,127 @@
 .todo-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0.5rem;
 }
 
 .todo-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 0;
-  position: relative;
+  gap: 10px;
+  padding: 8px 16px;
+  transition: background-color 0.2s;
+}
+
+.todo-item:hover {
+  background-color: var(--hover-bg);
 }
 
 .todo-item input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  border: 2px solid #ddd;
-  border-radius: 4px;
+  margin: 0;
+  width: 16px;
+  height: 16px;
   cursor: pointer;
-  position: relative;
-  z-index: 1;
+  border-radius: 4px;
+  border: 2px solid var(--border-color);
+  transition: all 0.2s;
+}
+
+.todo-item input[type="checkbox"]:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
 }
 
 .todo-item span {
+  flex: 1;
   font-size: 0.9rem;
-  color: #333;
+  color: #2c3e50;
+  transition: color 0.2s;
+  cursor: pointer;
+  user-select: none;
+}
+
+.todo-item span.completed {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+
+.add-todo-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: #2c3e50;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.add-todo-btn:hover {
+  background: var(--hover-bg);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.add-todo-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.add-todo-btn i {
+  font-size: 0.8rem;
+}
+
+.delete-todo-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #2c3e50;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: all 0.2s;
+}
+
+.todo-item:hover .delete-todo-btn {
+  opacity: 1;
+}
+
+.delete-todo-btn:hover {
+  background-color: var(--error-light);
+  color: var(--error);
+}
+
+.delete-todo-btn i {
+  font-size: 0.7rem;
+}
+
+.todo-empty {
+  padding: 12px 16px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.loading, .error {
+  text-align: center;
+  color: #6c757d;
+  padding: 1rem;
+  font-size: 0.9rem;
+}
+
+.error {
+  color: #dc3545;
+}
+
+.loading {
+  color: #0d6efd;
 }
 
 .mini-calendar {
@@ -345,16 +446,30 @@
   margin: 0;
 }
 
-.loading {
-  padding: 20px;
-  text-align: center;
-  color: #666;
+.view-more-todos {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border-color);
+  margin-top: auto;
 }
 
-.error {
-  padding: 20px;
-  text-align: center;
-  color: #c62828;
+.view-more-todos span {
+  color: var(--primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.view-more-todos span:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+.todos-box .bento-box-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 120px;
 }
 
 @media (max-width: 1200px) {
