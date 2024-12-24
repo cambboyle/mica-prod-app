@@ -52,6 +52,17 @@ export const useTodos = () => {
     }
   };
 
+  const handleUpdateTodo = async (id: string, updates: Partial<Todo>) => {
+    try {
+      const updatedTodo = await todoService.updateTodo(id, updates);
+      setTodos(todos.map(todo => todo.id === id ? updatedTodo : todo));
+      return updatedTodo;
+    } catch (error) {
+      console.error('Error updating todo:', error);
+      throw error;
+    }
+  };
+
   return {
     todos,
     loading,
@@ -59,7 +70,9 @@ export const useTodos = () => {
     handleCreateTodo,
     handleToggleTodo,
     handleDeleteTodo,
+    handleUpdateTodo,
     fetchTodos,
+    setTodos,
   };
 };
 

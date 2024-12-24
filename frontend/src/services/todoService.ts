@@ -15,7 +15,7 @@ export const todoService = {
   },
 
   updateTodo: async (id: string, todo: Partial<Todo>): Promise<Todo> => {
-    const response = await api.put(`${BASE_URL}/${id}`, todo);
+    const response = await api.patch(`${BASE_URL}/${id}`, todo);
     return response.data;
   },
 

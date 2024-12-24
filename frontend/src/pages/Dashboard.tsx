@@ -9,8 +9,10 @@ import TodoModal from '../components/TodoModal';
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { getUpcomingTasks, loading: tasksLoading, error: tasksError } = useTasks();
-  const { todos, loading, error, handleToggleTodo, handleDeleteTodo, handleCreateTodo } = useTodos();
+  const { todos, loading, error, handleToggleTodo, handleDeleteTodo, handleCreateTodo, handleUpdateTodo, setTodos } = useTodos();
   const [showTodoModal, setShowTodoModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
 
   const handleBoxClick = (route: string, event: React.MouseEvent) => {
     // If the click is on an interactive element, don't navigate
@@ -40,6 +42,35 @@ const Dashboard: React.FC = () => {
   const handleEventClick = (eventId: string) => {
     // Navigate to specific event
     console.log('Navigate to event:', eventId);
+  };
+
+  const handleStartEdit = (todo: Todo) => {
+    setEditingId(todo.id);
+    setEditText(todo.title);
+  };
+
+  const handleSaveEdit = async (id: string) => {
+    if (!editText.trim()) return;
+    
+    try {
+      await handleUpdateTodo(id, { title: editText.trim() });
+      const updatedTodos = todos.map(todo => 
+        todo.id === id ? { ...todo, title: editText.trim() } : todo
+      );
+      setTodos(updatedTodos);
+    } catch (err) {
+      console.error('Failed to update todo:', err);
+    }
+    setEditingId(null);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, id: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveEdit(id);
+    } else if (e.key === 'Escape') {
+      setEditingId(null);
+    }
   };
 
   // Get the 2 most urgent upcoming tasks
@@ -172,7 +203,7 @@ const Dashboard: React.FC = () => {
                 setShowTodoModal(true);
               }}
             >
-              <i className="fas fa-plus"></i>
+              Add
             </button>
           </div>
           <div className="bento-box-content">
@@ -183,37 +214,53 @@ const Dashboard: React.FC = () => {
             ) : (
               <>
                 <div className="todo-list">
-                  {todos.slice(0, 2).map((todo: Todo) => (
-                    <div key={todo.id} className="todo-item">
-                      <input 
-                        type="checkbox"
-                        checked={todo.status === TodoStatus.COMPLETED}
-                        onChange={() => handleToggleTodo(todo.id)}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <span 
-                        className={todo.status === TodoStatus.COMPLETED ? 'completed' : ''}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleTodo(todo.id);
-                        }}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        {todo.title}
-                      </span>
-                      {todo.status === TodoStatus.COMPLETED && (
-                        <button 
-                          className="delete-todo-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteTodo(todo.id);
-                          }}
-                        >
-                          <i className="fas fa-times"></i>
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                  {todos
+                    .filter(todo => todo.status !== TodoStatus.COMPLETED)
+                    .concat(todos.filter(todo => todo.status === TodoStatus.COMPLETED))
+                    .slice(0, 2)
+                    .map((todo: Todo) => (
+                      <div key={todo.id} className="todo-item">
+                        <input 
+                          type="checkbox"
+                          checked={todo.status === TodoStatus.COMPLETED}
+                          onChange={() => handleToggleTodo(todo.id)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        {editingId === todo.id ? (
+                          <input
+                            type="text"
+                            value={editText}
+                            onChange={(e) => setEditText(e.target.value)}
+                            onBlur={() => handleSaveEdit(todo.id)}
+                            onKeyDown={(e) => handleKeyDown(e, todo.id)}
+                            className="todo-edit-input"
+                            autoFocus
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        ) : (
+                          <span 
+                            className={todo.status === TodoStatus.COMPLETED ? 'completed' : ''}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStartEdit(todo);
+                            }}
+                          >
+                            {todo.title}
+                          </span>
+                        )}
+                        {todo.status === TodoStatus.COMPLETED && (
+                          <button 
+                            className="delete-todo-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteTodo(todo.id);
+                            }}
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    ))}
                   {todos.length === 0 && (
                     <div className="todo-empty">No todos yet</div>
                   )}

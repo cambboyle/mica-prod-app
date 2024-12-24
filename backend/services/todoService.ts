@@ -41,6 +41,18 @@ class TodoService {
     await todo.destroy();
     return todo;
   }
+
+  async updateTodo(todoId: number, userId: number, updates: Partial<{ title: string; status: 'PENDING' | 'COMPLETED' }>) {
+    const todo = await Todo.findOne({
+      where: { id: todoId, userId },
+    });
+
+    if (!todo) {
+      throw new Error('Todo not found');
+    }
+
+    return todo.update(updates);
+  }
 }
 
 export default new TodoService();

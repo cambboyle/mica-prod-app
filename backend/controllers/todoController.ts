@@ -63,3 +63,21 @@ export const deleteTodo = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Error deleting todo', error });
   }
 };
+
+export const updateTodo = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const todo = await todoService.updateTodo(parseInt(id), userId, updates);
+    res.json(todo);
+  } catch (error) {
+    console.error('Error updating todo:', error);
+    res.status(500).json({ error: 'Failed to update todo' });
+  }
+};
